@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { hash } from "crypto";
+import { compare } from "bcryptjs";
 
 export async function POST(req: Request) {
   try {
@@ -29,9 +29,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // Verify password
-    const passwordHash = hash("sha256", password);
-    if (passwordHash !== user[0].passwordHash) {
+    // Verify password with bcrypt
+    const isPasswordValid = await compare(password, user[0].passwordHash);
+
+    if (!isPasswordValid) {
       return NextResponse.json(
         { error: "Email atau password salah" },
         { status: 401 }
