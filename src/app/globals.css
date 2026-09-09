@@ -261,6 +261,34 @@ tr:hover td {
   background: var(--text-muted);
 }
 
+/* Safe Area for Bottom Nav */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* Mobile First */
+@media (max-width: 640px) {
+  .kpi-card {
+    padding: 0.625rem;
+  }
+  
+  .kpi-value {
+    font-size: 1rem;
+  }
+  
+  .kpi-label {
+    font-size: 0.625rem;
+  }
+  
+  table {
+    font-size: 0.75rem;
+  }
+  
+  th, td {
+    padding: 0.5rem 0.625rem;
+  }
+}
+
 /* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db/client";
-import { transactions } from "@/lib/db/schema";
+import { transactions, budgets, categories } from "@/lib/db/schema";
 import { eq, desc, sum, and, gte, lte } from "drizzle-orm";
 
 export async function GET(req: Request) {
@@ -55,10 +55,44 @@ export async function GET(req: Request) {
     const totalIncome = Number(incomeResult[0]?.total || 0);
     const totalExpense = Number(expenseResult[0]?.total || 0);
 
+    // Get current month budgets with spent
+    const month = now.getMonth() + 1;
+    const year = now.getFullYear();
+    
+    const userBudgets = await db
+      .select()
+      .from(budgets)
+      .where(and(eq(budgets.userId, userId), eq(budgets.month, month), eq(budgets.year, year)));
+
+    const budgetsWithSpent = await Promise.all(
+      userBudgets.map(async (budget) => {
+        const spentResult = await db
+          .select({ total: sum(transactions.amount) })
+          .from(transactions)
+          .where(
+            and(
+              eq(transactions.userId, userId),
+              eq(transactions.categoryId, budget.categoryId),
+              eq(transactions.type, "expense"),
+              gte(transactions.date, startOfMonth),
+              lte(transactions.date, endOfMonth)
+            )
+          );
+
+        const spent = spentResult[0]?.total;
+        return {
+          id: budget.id,
+          amount: budget.amount,
+          spent: spent !== null && spent !== undefined ? Number(spent) : 0,
+        };
+      })
+    );
+
     return NextResponse.json({
       totalIncome,
       totalExpense,
       balance: totalIncome - totalExpense,
+      budgets: budgetsWithSpent,
       recentTransactions: recentTransactions.map((t) => ({
         id: t.id,
         amount: t.amount,
