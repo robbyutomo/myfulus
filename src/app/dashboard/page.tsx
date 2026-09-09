@@ -79,7 +79,7 @@ export default function DashboardPage() {
         <div className="kpi-card">
           <div className="kpi-label flex items-center space-x-1">
             <TrendingUp className="w-3 h-3 text-emerald-600" />
-            <span>_masuk</span>
+            <span>Pemasukan</span>
           </div>
           <div className="kpi-value text-emerald-600">
             {formatIDR(dashboardData.totalIncome)}
@@ -89,7 +89,7 @@ export default function DashboardPage() {
         <div className="kpi-card">
           <div className="kpi-label flex items-center space-x-1">
             <TrendingDown className="w-3 h-3 text-red-600" />
-            <span>keluar</span>
+            <span>Pengeluaran</span>
           </div>
           <div className="kpi-value text-red-600">
             {formatIDR(dashboardData.totalExpense)}

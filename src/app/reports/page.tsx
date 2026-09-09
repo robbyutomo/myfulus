@@ -127,13 +127,13 @@ export default function ReportsPage() {
       {/* KPI Strip */}
       <div className="grid grid-cols-3 gap-2 mb-4">
         <div className="kpi-card">
-          <div className="kpi-label">_masuk</div>
+          <div className="kpi-label">Pemasukan</div>
           <div className="kpi-value text-emerald-600">
             {formatIDR(reportData.monthlyIncome)}
           </div>
         </div>
         <div className="kpi-card">
-          <div className="kpi-label">keluar</div>
+          <div className="kpi-label">Pengeluaran</div>
           <div className="kpi-value text-red-600">
             {formatIDR(reportData.monthlyExpense)}
           </div>
