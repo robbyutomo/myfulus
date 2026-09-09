@@ -55,9 +55,12 @@ export async function GET(req: Request) {
             )
           );
 
+        const spent = spentResult[0]?.total;
+        const spentValue = spent !== null && spent !== undefined ? Number(spent) : 0;
+        console.log(`Budget ${budget.categoryName}: spent=${spent}, spentValue=${spentValue}`);
         return {
           ...budget,
-          spent: Number(spentResult[0]?.total || 0),
+          spent: spentValue,
         };
       })
     );
