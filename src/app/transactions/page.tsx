@@ -6,35 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatIDR } from "@/lib/utils";
-import { useCachedFetch } from "@/hooks/useCachedFetch";
+import { useTransactions, useCategories } from "@/hooks/useData";
+import { useAppStore } from "@/store/useAppStore";
 import { Plus, Trash2, X } from "lucide-react";
 
-interface Transaction {
-  id: string;
-  amount: number;
-  type: "income" | "expense";
-  description: string;
-  date: string;
-  category: string;
-}
-
-interface Category {
-  id: string;
-  name: string;
-  type: "income" | "expense";
-}
-
-interface TransactionsData {
-  transactions: Transaction[];
-}
-
-interface CategoriesData {
-  categories: Category[];
-}
-
 export default function TransactionsPage() {
-  const { data: transData, loading: transLoading, refresh: refreshTrans } = useCachedFetch<TransactionsData>("/api/transactions");
-  const { data: catData, loading: catLoading } = useCachedFetch<CategoriesData>("/api/categories");
+  const transactions = useTransactions();
+  const categories = useCategories();
+  const { setTransactions } = useAppStore();
   
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -44,10 +23,6 @@ export default function TransactionsPage() {
     categoryId: "",
     date: new Date().toISOString().split("T")[0],
   });
-
-  const loading = transLoading || catLoading;
-  const transactions = transData?.transactions || [];
-  const categories = catData?.categories || [];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,7 +45,9 @@ export default function TransactionsPage() {
           categoryId: "",
           date: new Date().toISOString().split("T")[0],
         });
-        refreshTrans();
+        // Refresh data
+        const data = await fetch("/api/transactions").then(r => r.json());
+        setTransactions(data.transactions || []);
       }
     } catch (error) {
       console.error("Failed to add transaction:", error);
@@ -84,18 +61,18 @@ export default function TransactionsPage() {
       });
 
       if (res.ok) {
-        refreshTrans();
+        const data = await fetch("/api/transactions").then(r => r.json());
+        setTransactions(data.transactions || []);
       }
     } catch (error) {
       console.error("Failed to delete transaction:", error);
     }
   };
 
-  if (loading) {
+  if (!transactions || !categories) {
     return (
       <MobileLayout title="Transaksi">
         <div className="space-y-3">
-          {/* Skeleton */}
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="bg-white rounded-md border border-gray-200 p-3 animate-pulse">
               <div className="flex items-center space-x-3">

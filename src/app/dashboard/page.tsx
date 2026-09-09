@@ -5,7 +5,7 @@ import { MobileLayout } from "@/components/MobileLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatIDR } from "@/lib/utils";
-import { useCachedFetch } from "@/hooks/useCachedFetch";
+import { useDashboard } from "@/hooks/useData";
 import {
   TrendingUp,
   TrendingDown,
@@ -14,33 +14,14 @@ import {
   ArrowRight,
 } from "lucide-react";
 
-interface DashboardData {
-  totalIncome: number;
-  totalExpense: number;
-  balance: number;
-  budgets: Array<{
-    id: string;
-    amount: number;
-    spent: number;
-  }>;
-  recentTransactions: Array<{
-    id: string;
-    amount: number;
-    type: "income" | "expense";
-    description: string;
-    date: string;
-  }>;
-}
-
 export default function DashboardPage() {
   const router = useRouter();
-  const { data: dashboardData, loading } = useCachedFetch<DashboardData>("/api/dashboard");
+  const data = useDashboard();
 
-  if (loading) {
+  if (!data) {
     return (
       <MobileLayout title="Beranda">
         <div className="space-y-4">
-          {/* Skeleton KPI */}
           <div className="grid grid-cols-3 gap-2">
             {[1, 2, 3].map((i) => (
               <div key={i} className="kpi-card animate-pulse">
@@ -49,7 +30,6 @@ export default function DashboardPage() {
               </div>
             ))}
           </div>
-          {/* Skeleton Cards */}
           {[1, 2].map((i) => (
             <div key={i} className="bg-white rounded-md border border-gray-200 p-4 animate-pulse">
               <div className="h-4 bg-gray-200 rounded w-24 mb-3"></div>
@@ -63,14 +43,6 @@ export default function DashboardPage() {
       </MobileLayout>
     );
   }
-
-  const data = dashboardData || {
-    totalIncome: 0,
-    totalExpense: 0,
-    balance: 0,
-    budgets: [],
-    recentTransactions: [],
-  };
 
   return (
     <MobileLayout title="Beranda">

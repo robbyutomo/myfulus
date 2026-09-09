@@ -6,34 +6,26 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatIDR } from "@/lib/utils";
-import { useCachedFetch } from "@/hooks/useCachedFetch";
+import { useSavings } from "@/hooks/useData";
+import { useAppStore } from "@/store/useAppStore";
 import { Plus, Edit2, Trash2, Target, X } from "lucide-react";
 
-interface SavingsGoal {
-  id: string;
-  name: string;
-  targetAmount: number;
-  currentAmount: number;
-  deadline: string | null;
-  createdAt: string;
-}
-
-interface SavingsData {
-  savingsGoals: SavingsGoal[];
-}
-
 export default function SavingsPage() {
-  const { data: savingsData, loading, refresh: refreshSavings } = useCachedFetch<SavingsData>("/api/savings");
+  const savings = useSavings();
+  const { setSavings } = useAppStore();
   
   const [showForm, setShowForm] = useState(false);
-  const [editingGoal, setEditingGoal] = useState<SavingsGoal | null>(null);
+  const [editingGoal, setEditingGoal] = useState<{
+    id: string;
+    name: string;
+    targetAmount: number;
+    deadline: string | null;
+  } | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     targetAmount: "",
     deadline: "",
   });
-
-  const savingsGoals = savingsData?.savingsGoals || [];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,14 +49,15 @@ export default function SavingsPage() {
         setShowForm(false);
         setEditingGoal(null);
         setFormData({ name: "", targetAmount: "", deadline: "" });
-        refreshSavings();
+        const data = await fetch("/api/savings").then(r => r.json());
+        setSavings(data.savingsGoals || []);
       }
     } catch (error) {
       console.error("Failed to save savings goal:", error);
     }
   };
 
-  const handleEdit = (goal: SavingsGoal) => {
+  const handleEdit = (goal: { id: string; name: string; targetAmount: number; deadline: string | null }) => {
     setEditingGoal(goal);
     setFormData({
       name: goal.name,
@@ -81,7 +74,8 @@ export default function SavingsPage() {
       });
 
       if (res.ok) {
-        refreshSavings();
+        const data = await fetch("/api/savings").then(r => r.json());
+        setSavings(data.savingsGoals || []);
       }
     } catch (error) {
       console.error("Failed to delete savings goal:", error);
@@ -97,7 +91,8 @@ export default function SavingsPage() {
       });
 
       if (res.ok) {
-        refreshSavings();
+        const data = await fetch("/api/savings").then(r => r.json());
+        setSavings(data.savingsGoals || []);
       }
     } catch (error) {
       console.error("Failed to add amount:", error);
@@ -117,7 +112,7 @@ export default function SavingsPage() {
     return diffDays;
   };
 
-  if (loading) {
+  if (!savings) {
     return (
       <MobileLayout title="Tabungan">
         <div className="space-y-3">
@@ -138,7 +133,7 @@ export default function SavingsPage() {
       {/* Actions */}
       <div className="flex justify-between items-center mb-4">
         <div className="text-sm text-gray-500">
-          {savingsGoals.length} target
+          {savings.length} target
         </div>
         <Button onClick={() => setShowForm(true)} size="sm">
           <Plus className="w-4 h-4" />
@@ -228,7 +223,7 @@ export default function SavingsPage() {
       )}
 
       {/* Savings Goals */}
-      {savingsGoals.length === 0 ? (
+      {savings.length === 0 ? (
         <Card>
           <CardContent className="p-6 text-center text-sm text-gray-500">
             Belum ada target tabungan
@@ -236,7 +231,7 @@ export default function SavingsPage() {
         </Card>
       ) : (
         <div className="space-y-3">
-          {savingsGoals.map((goal) => {
+          {savings.map((goal) => {
             const percentage = getProgressPercentage(
               goal.currentAmount,
               goal.targetAmount
@@ -340,7 +335,7 @@ export default function SavingsPage() {
       )}
 
       {/* Summary */}
-      {savingsGoals.length > 0 && (
+      {savings.length > 0 && (
         <Card className="mt-4">
           <CardContent className="p-3">
             <div className="grid grid-cols-3 gap-2 text-center">
@@ -348,7 +343,7 @@ export default function SavingsPage() {
                 <div className="text-[10px] text-gray-500 mb-0.5">Target</div>
                 <div className="text-xs font-semibold tabular-nums text-gray-900">
                   {formatIDR(
-                    savingsGoals.reduce((sum, g) => sum + g.targetAmount, 0)
+                    savings.reduce((sum, g) => sum + g.targetAmount, 0)
                   )}
                 </div>
               </div>
@@ -356,7 +351,7 @@ export default function SavingsPage() {
                 <div className="text-[10px] text-gray-500 mb-0.5">Terkumpul</div>
                 <div className="text-xs font-semibold tabular-nums text-emerald-600">
                   {formatIDR(
-                    savingsGoals.reduce((sum, g) => sum + g.currentAmount, 0)
+                    savings.reduce((sum, g) => sum + g.currentAmount, 0)
                   )}
                 </div>
               </div>
@@ -364,7 +359,7 @@ export default function SavingsPage() {
                 <div className="text-[10px] text-gray-500 mb-0.5">Sisa</div>
                 <div className="text-xs font-semibold tabular-nums text-gray-600">
                   {formatIDR(
-                    savingsGoals.reduce(
+                    savings.reduce(
                       (sum, g) =>
                         sum + Math.max(g.targetAmount - g.currentAmount, 0),
                       0

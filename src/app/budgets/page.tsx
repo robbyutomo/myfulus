@@ -6,52 +6,30 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatIDR } from "@/lib/utils";
-import { useCachedFetch } from "@/hooks/useCachedFetch";
+import { useBudgets, useCategories } from "@/hooks/useData";
+import { useAppStore } from "@/store/useAppStore";
 import { Plus, Edit2, Trash2, X } from "lucide-react";
-
-interface Budget {
-  id: string;
-  categoryId: string;
-  categoryName: string;
-  amount: number;
-  spent: number;
-  month: number;
-  year: number;
-}
-
-interface Category {
-  id: string;
-  name: string;
-  type: "income" | "expense";
-}
-
-interface BudgetsData {
-  budgets: Budget[];
-}
-
-interface CategoriesData {
-  categories: Category[];
-}
 
 export default function BudgetsPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   
-  const { data: budgetData, loading: budgetLoading, refresh: refreshBudgets } = useCachedFetch<BudgetsData>(
-    `/api/budgets?month=${currentMonth}&year=${currentYear}`
-  );
-  const { data: catData, loading: catLoading } = useCachedFetch<CategoriesData>("/api/categories");
+  const budgets = useBudgets(currentMonth, currentYear);
+  const allCategories = useCategories();
+  const { setBudgets } = useAppStore();
   
   const [showForm, setShowForm] = useState(false);
-  const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
+  const [editingBudget, setEditingBudget] = useState<{
+    id: string;
+    categoryId: string;
+    amount: number;
+  } | null>(null);
   const [formData, setFormData] = useState({
     categoryId: "",
     amount: "",
   });
 
-  const loading = budgetLoading || catLoading;
-  const budgets = budgetData?.budgets || [];
-  const categories = (catData?.categories || []).filter((c: Category) => c.type === "expense");
+  const categories = allCategories?.filter((c) => c.type === "expense") || [];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,14 +54,17 @@ export default function BudgetsPage() {
         setShowForm(false);
         setEditingBudget(null);
         setFormData({ categoryId: "", amount: "" });
-        refreshBudgets();
+        // Refresh data
+        const key = `${currentMonth}-${currentYear}`;
+        const data = await fetch(`/api/budgets?month=${currentMonth}&year=${currentYear}`).then(r => r.json());
+        setBudgets(key, data.budgets || []);
       }
     } catch (error) {
       console.error("Failed to save budget:", error);
     }
   };
 
-  const handleEdit = (budget: Budget) => {
+  const handleEdit = (budget: { id: string; categoryId: string; amount: number }) => {
     setEditingBudget(budget);
     setFormData({
       categoryId: budget.categoryId,
@@ -99,7 +80,9 @@ export default function BudgetsPage() {
       });
 
       if (res.ok) {
-        refreshBudgets();
+        const key = `${currentMonth}-${currentYear}`;
+        const data = await fetch(`/api/budgets?month=${currentMonth}&year=${currentYear}`).then(r => r.json());
+        setBudgets(key, data.budgets || []);
       }
     } catch (error) {
       console.error("Failed to delete budget:", error);
@@ -113,7 +96,7 @@ export default function BudgetsPage() {
     return "positive";
   };
 
-  if (loading) {
+  if (!budgets) {
     return (
       <MobileLayout title="Budget">
         <div className="space-y-3">
