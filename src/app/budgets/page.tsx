@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { MobileLayout } from "@/components/MobileLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatIDR } from "@/lib/utils";
+import { useCachedFetch } from "@/hooks/useCachedFetch";
 import { Plus, Edit2, Trash2, X } from "lucide-react";
 
 interface Budget {
@@ -24,43 +25,33 @@ interface Category {
   type: "income" | "expense";
 }
 
+interface BudgetsData {
+  budgets: Budget[];
+}
+
+interface CategoriesData {
+  categories: Category[];
+}
+
 export default function BudgetsPage() {
-  const [budgets, setBudgets] = useState<Budget[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  
+  const { data: budgetData, loading: budgetLoading, refresh: refreshBudgets } = useCachedFetch<BudgetsData>(
+    `/api/budgets?month=${currentMonth}&year=${currentYear}`
+  );
+  const { data: catData, loading: catLoading } = useCachedFetch<CategoriesData>("/api/categories");
+  
+  const [showForm, setShowForm] = useState(false);
+  const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
   const [formData, setFormData] = useState({
     categoryId: "",
     amount: "",
   });
 
-  useEffect(() => {
-    fetchData();
-  }, [currentMonth, currentYear]);
-
-  const fetchData = async () => {
-    try {
-      const [budgetRes, catRes] = await Promise.all([
-        fetch(`/api/budgets?month=${currentMonth}&year=${currentYear}`),
-        fetch("/api/categories"),
-      ]);
-      if (budgetRes.ok) {
-        const data = await budgetRes.json();
-        setBudgets(data.budgets);
-      }
-      if (catRes.ok) {
-        const data = await catRes.json();
-        setCategories(data.categories.filter((c: Category) => c.type === "expense"));
-      }
-    } catch (error) {
-      console.error("Failed to fetch data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loading = budgetLoading || catLoading;
+  const budgets = budgetData?.budgets || [];
+  const categories = (catData?.categories || []).filter((c: Category) => c.type === "expense");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,7 +76,7 @@ export default function BudgetsPage() {
         setShowForm(false);
         setEditingBudget(null);
         setFormData({ categoryId: "", amount: "" });
-        await fetchData();
+        refreshBudgets();
       }
     } catch (error) {
       console.error("Failed to save budget:", error);
@@ -108,7 +99,7 @@ export default function BudgetsPage() {
       });
 
       if (res.ok) {
-        await fetchData();
+        refreshBudgets();
       }
     } catch (error) {
       console.error("Failed to delete budget:", error);
@@ -125,7 +116,15 @@ export default function BudgetsPage() {
   if (loading) {
     return (
       <MobileLayout title="Budget">
-        <div className="text-center text-sm text-gray-500 py-8">Memuat...</div>
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-white rounded-md border border-gray-200 p-3 animate-pulse">
+              <div className="h-4 bg-gray-200 rounded w-24 mb-3"></div>
+              <div className="h-2 bg-gray-200 rounded mb-2"></div>
+              <div className="h-2 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          ))}
+        </div>
       </MobileLayout>
     );
   }

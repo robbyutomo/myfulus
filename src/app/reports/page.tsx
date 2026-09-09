@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { MobileLayout } from "@/components/MobileLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatIDR } from "@/lib/utils";
+import { useCachedFetch } from "@/hooks/useCachedFetch";
 import { Download } from "lucide-react";
 import {
   BarChart,
@@ -31,38 +32,15 @@ interface ReportData {
 }
 
 export default function ReportsPage() {
-  const [reportData, setReportData] = useState<ReportData>({
-    monthlyIncome: 0,
-    monthlyExpense: 0,
-    incomeByCategory: [],
-    expenseByCategory: [],
-    dailyTransactions: [],
-  });
-  const [loading, setLoading] = useState(true);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-
-  useEffect(() => {
-    fetchReportData();
-  }, [currentMonth, currentYear]);
-
-  const fetchReportData = async () => {
-    try {
-      const res = await fetch(
-        `/api/reports?month=${currentMonth}&year=${currentYear}`
-      );
-      if (res.ok) {
-        const data = await res.json();
-        setReportData(data);
-      }
-    } catch (error) {
-      console.error("Failed to fetch report data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  
+  const { data: reportData, loading } = useCachedFetch<ReportData>(
+    `/api/reports?month=${currentMonth}&year=${currentYear}`
+  );
 
   const exportCSV = () => {
+    if (!reportData) return;
     const headers = ["Tanggal", "Pemasukan", "Pengeluaran"];
     const rows = reportData.dailyTransactions.map((t) => [
       t.date,
@@ -83,10 +61,33 @@ export default function ReportsPage() {
   if (loading) {
     return (
       <MobileLayout title="Laporan">
-        <div className="text-center text-sm text-gray-500 py-8">Memuat...</div>
+        <div className="space-y-4">
+          <div className="grid grid-cols-3 gap-2">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="kpi-card animate-pulse">
+                <div className="h-2 bg-gray-200 rounded w-16 mb-2"></div>
+                <div className="h-5 bg-gray-200 rounded w-20"></div>
+              </div>
+            ))}
+          </div>
+          {[1, 2].map((i) => (
+            <div key={i} className="bg-white rounded-md border border-gray-200 p-4 animate-pulse">
+              <div className="h-4 bg-gray-200 rounded w-32 mb-3"></div>
+              <div className="h-32 bg-gray-200 rounded"></div>
+            </div>
+          ))}
+        </div>
       </MobileLayout>
     );
   }
+
+  const data = reportData || {
+    monthlyIncome: 0,
+    monthlyExpense: 0,
+    incomeByCategory: [],
+    expenseByCategory: [],
+    dailyTransactions: [],
+  };
 
   return (
     <MobileLayout title="Laporan">
@@ -129,25 +130,25 @@ export default function ReportsPage() {
         <div className="kpi-card">
           <div className="kpi-label">Pemasukan</div>
           <div className="kpi-value text-emerald-600">
-            {formatIDR(reportData.monthlyIncome)}
+            {formatIDR(data.monthlyIncome)}
           </div>
         </div>
         <div className="kpi-card">
           <div className="kpi-label">Pengeluaran</div>
           <div className="kpi-value text-red-600">
-            {formatIDR(reportData.monthlyExpense)}
+            {formatIDR(data.monthlyExpense)}
           </div>
         </div>
         <div className="kpi-card">
           <div className="kpi-label">Selisih</div>
           <div
             className={`kpi-value ${
-              reportData.monthlyIncome - reportData.monthlyExpense >= 0
+              data.monthlyIncome - data.monthlyExpense >= 0
                 ? "text-emerald-600"
                 : "text-red-600"
             }`}
           >
-            {formatIDR(reportData.monthlyIncome - reportData.monthlyExpense)}
+            {formatIDR(data.monthlyIncome - data.monthlyExpense)}
           </div>
         </div>
       </div>
@@ -158,7 +159,7 @@ export default function ReportsPage() {
           <CardTitle className="text-sm">Pemasukan per Kategori</CardTitle>
         </CardHeader>
         <CardContent>
-          {reportData.incomeByCategory.length === 0 ? (
+          {data.incomeByCategory.length === 0 ? (
             <div className="p-4 text-center text-xs text-gray-500">
               Tidak ada data
             </div>
@@ -167,7 +168,7 @@ export default function ReportsPage() {
               <ResponsiveContainer width="100%" height={180}>
                 <PieChart>
                   <Pie
-                    data={reportData.incomeByCategory}
+                    data={data.incomeByCategory}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
@@ -175,7 +176,7 @@ export default function ReportsPage() {
                     fill="#8884d8"
                     dataKey="value"
                   >
-                    {reportData.incomeByCategory.map((entry, index) => (
+                    {data.incomeByCategory.map((entry, index) => (
                       <Cell
                         key={`cell-${index}`}
                         fill={entry.color || "#059669"}
@@ -187,7 +188,7 @@ export default function ReportsPage() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="flex flex-wrap gap-2 mt-2">
-                {reportData.incomeByCategory.map((item, i) => (
+                {data.incomeByCategory.map((item, i) => (
                   <div key={i} className="flex items-center text-xs">
                     <div
                       className="w-2 h-2 rounded-full mr-1"
@@ -208,7 +209,7 @@ export default function ReportsPage() {
           <CardTitle className="text-sm">Pengeluaran per Kategori</CardTitle>
         </CardHeader>
         <CardContent>
-          {reportData.expenseByCategory.length === 0 ? (
+          {data.expenseByCategory.length === 0 ? (
             <div className="p-4 text-center text-xs text-gray-500">
               Tidak ada data
             </div>
@@ -217,7 +218,7 @@ export default function ReportsPage() {
               <ResponsiveContainer width="100%" height={180}>
                 <PieChart>
                   <Pie
-                    data={reportData.expenseByCategory}
+                    data={data.expenseByCategory}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
@@ -225,7 +226,7 @@ export default function ReportsPage() {
                     fill="#8884d8"
                     dataKey="value"
                   >
-                    {reportData.expenseByCategory.map((entry, index) => (
+                    {data.expenseByCategory.map((entry, index) => (
                       <Cell
                         key={`cell-${index}`}
                         fill={entry.color || "#dc2626"}
@@ -237,7 +238,7 @@ export default function ReportsPage() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="flex flex-wrap gap-2 mt-2">
-                {reportData.expenseByCategory.map((item, i) => (
+                {data.expenseByCategory.map((item, i) => (
                   <div key={i} className="flex items-center text-xs">
                     <div
                       className="w-2 h-2 rounded-full mr-1"
@@ -258,13 +259,13 @@ export default function ReportsPage() {
           <CardTitle className="text-sm">Transaksi Harian</CardTitle>
         </CardHeader>
         <CardContent>
-          {reportData.dailyTransactions.length === 0 ? (
+          {data.dailyTransactions.length === 0 ? (
             <div className="p-4 text-center text-xs text-gray-500">
               Tidak ada data
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={reportData.dailyTransactions}>
+              <BarChart data={data.dailyTransactions}>
                 <XAxis
                   dataKey="date"
                   tick={{ fontSize: 10 }}
@@ -295,14 +296,14 @@ export default function ReportsPage() {
       </Card>
 
       {/* Daily Transactions Table */}
-      {reportData.dailyTransactions.length > 0 && (
+      {data.dailyTransactions.length > 0 && (
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">Detail Harian</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-gray-100">
-              {reportData.dailyTransactions.map((t) => (
+              {data.dailyTransactions.map((t) => (
                 <div key={t.date} className="flex items-center justify-between px-3 py-2">
                   <span className="text-xs text-gray-600">
                     {new Date(t.date).toLocaleDateString("id-ID", {

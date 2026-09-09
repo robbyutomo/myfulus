@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { MobileLayout } from "@/components/MobileLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatIDR } from "@/lib/utils";
+import { useCachedFetch } from "@/hooks/useCachedFetch";
 import { Plus, Edit2, Trash2, Target, X } from "lucide-react";
 
 interface SavingsGoal {
@@ -17,9 +18,13 @@ interface SavingsGoal {
   createdAt: string;
 }
 
+interface SavingsData {
+  savingsGoals: SavingsGoal[];
+}
+
 export default function SavingsPage() {
-  const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: savingsData, loading, refresh: refreshSavings } = useCachedFetch<SavingsData>("/api/savings");
+  
   const [showForm, setShowForm] = useState(false);
   const [editingGoal, setEditingGoal] = useState<SavingsGoal | null>(null);
   const [formData, setFormData] = useState({
@@ -28,23 +33,7 @@ export default function SavingsPage() {
     deadline: "",
   });
 
-  useEffect(() => {
-    fetchSavingsGoals();
-  }, []);
-
-  const fetchSavingsGoals = async () => {
-    try {
-      const res = await fetch("/api/savings");
-      if (res.ok) {
-        const data = await res.json();
-        setSavingsGoals(data.savingsGoals);
-      }
-    } catch (error) {
-      console.error("Failed to fetch savings goals:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const savingsGoals = savingsData?.savingsGoals || [];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,7 +57,7 @@ export default function SavingsPage() {
         setShowForm(false);
         setEditingGoal(null);
         setFormData({ name: "", targetAmount: "", deadline: "" });
-        await fetchSavingsGoals();
+        refreshSavings();
       }
     } catch (error) {
       console.error("Failed to save savings goal:", error);
@@ -92,7 +81,7 @@ export default function SavingsPage() {
       });
 
       if (res.ok) {
-        await fetchSavingsGoals();
+        refreshSavings();
       }
     } catch (error) {
       console.error("Failed to delete savings goal:", error);
@@ -108,7 +97,7 @@ export default function SavingsPage() {
       });
 
       if (res.ok) {
-        await fetchSavingsGoals();
+        refreshSavings();
       }
     } catch (error) {
       console.error("Failed to add amount:", error);
@@ -131,7 +120,15 @@ export default function SavingsPage() {
   if (loading) {
     return (
       <MobileLayout title="Tabungan">
-        <div className="text-center text-sm text-gray-500 py-8">Memuat...</div>
+        <div className="space-y-3">
+          {[1, 2].map((i) => (
+            <div key={i} className="bg-white rounded-md border border-gray-200 p-3 animate-pulse">
+              <div className="h-4 bg-gray-200 rounded w-32 mb-3"></div>
+              <div className="h-2 bg-gray-200 rounded mb-2"></div>
+              <div className="h-2 bg-gray-200 rounded w-2/3"></div>
+            </div>
+          ))}
+        </div>
       </MobileLayout>
     );
   }

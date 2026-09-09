@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { MobileLayout } from "@/components/MobileLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatIDR } from "@/lib/utils";
+import { useCachedFetch } from "@/hooks/useCachedFetch";
 import { Plus, Trash2, X } from "lucide-react";
 
 interface Transaction {
@@ -23,10 +24,18 @@ interface Category {
   type: "income" | "expense";
 }
 
+interface TransactionsData {
+  transactions: Transaction[];
+}
+
+interface CategoriesData {
+  categories: Category[];
+}
+
 export default function TransactionsPage() {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: transData, loading: transLoading, refresh: refreshTrans } = useCachedFetch<TransactionsData>("/api/transactions");
+  const { data: catData, loading: catLoading } = useCachedFetch<CategoriesData>("/api/categories");
+  
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     amount: "",
@@ -36,30 +45,9 @@ export default function TransactionsPage() {
     date: new Date().toISOString().split("T")[0],
   });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      const [transRes, catRes] = await Promise.all([
-        fetch("/api/transactions"),
-        fetch("/api/categories"),
-      ]);
-      if (transRes.ok) {
-        const data = await transRes.json();
-        setTransactions(data.transactions);
-      }
-      if (catRes.ok) {
-        const data = await catRes.json();
-        setCategories(data.categories);
-      }
-    } catch (error) {
-      console.error("Failed to fetch data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loading = transLoading || catLoading;
+  const transactions = transData?.transactions || [];
+  const categories = catData?.categories || [];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,7 +70,7 @@ export default function TransactionsPage() {
           categoryId: "",
           date: new Date().toISOString().split("T")[0],
         });
-        await fetchData();
+        refreshTrans();
       }
     } catch (error) {
       console.error("Failed to add transaction:", error);
@@ -96,7 +84,7 @@ export default function TransactionsPage() {
       });
 
       if (res.ok) {
-        await fetchData();
+        refreshTrans();
       }
     } catch (error) {
       console.error("Failed to delete transaction:", error);
@@ -106,7 +94,21 @@ export default function TransactionsPage() {
   if (loading) {
     return (
       <MobileLayout title="Transaksi">
-        <div className="text-center text-sm text-gray-500 py-8">Memuat...</div>
+        <div className="space-y-3">
+          {/* Skeleton */}
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-white rounded-md border border-gray-200 p-3 animate-pulse">
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-gray-200 rounded-full"></div>
+                <div className="flex-1">
+                  <div className="h-3 bg-gray-200 rounded w-24 mb-1"></div>
+                  <div className="h-2 bg-gray-200 rounded w-16"></div>
+                </div>
+                <div className="h-4 bg-gray-200 rounded w-20"></div>
+              </div>
+            </div>
+          ))}
+        </div>
       </MobileLayout>
     );
   }

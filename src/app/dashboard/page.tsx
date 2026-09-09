@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MobileLayout } from "@/components/MobileLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatIDR } from "@/lib/utils";
+import { useCachedFetch } from "@/hooks/useCachedFetch";
 import {
   TrendingUp,
   TrendingDown,
@@ -34,43 +34,43 @@ interface DashboardData {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [dashboardData, setDashboardData] = useState<DashboardData>({
+  const { data: dashboardData, loading } = useCachedFetch<DashboardData>("/api/dashboard");
+
+  if (loading) {
+    return (
+      <MobileLayout title="Beranda">
+        <div className="space-y-4">
+          {/* Skeleton KPI */}
+          <div className="grid grid-cols-3 gap-2">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="kpi-card animate-pulse">
+                <div className="h-2 bg-gray-200 rounded w-16 mb-2"></div>
+                <div className="h-5 bg-gray-200 rounded w-20"></div>
+              </div>
+            ))}
+          </div>
+          {/* Skeleton Cards */}
+          {[1, 2].map((i) => (
+            <div key={i} className="bg-white rounded-md border border-gray-200 p-4 animate-pulse">
+              <div className="h-4 bg-gray-200 rounded w-24 mb-3"></div>
+              <div className="space-y-2">
+                <div className="h-3 bg-gray-200 rounded"></div>
+                <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </MobileLayout>
+    );
+  }
+
+  const data = dashboardData || {
     totalIncome: 0,
     totalExpense: 0,
     balance: 0,
     budgets: [],
     recentTransactions: [],
-  });
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
-    try {
-      const res = await fetch("/api/dashboard");
-      if (res.ok) {
-        const data = await res.json();
-        setDashboardData(data);
-      }
-    } catch (error) {
-      console.error("Failed to fetch dashboard data:", error);
-    } finally {
-      setLoading(false);
-    }
   };
-
-  if (loading) {
-    return (
-      <MobileLayout title="Beranda">
-        <div className="text-center text-sm text-gray-500 py-8">Memuat...</div>
-      </MobileLayout>
-    );
-  }
-
-  const totalBudget = dashboardData.budgets.reduce((sum, b) => sum + b.amount, 0);
-  const totalSpent = dashboardData.budgets.reduce((sum, b) => sum + b.spent, 0);
 
   return (
     <MobileLayout title="Beranda">
@@ -82,7 +82,7 @@ export default function DashboardPage() {
             <span>Pemasukan</span>
           </div>
           <div className="kpi-value text-emerald-600">
-            {formatIDR(dashboardData.totalIncome)}
+            {formatIDR(data.totalIncome)}
           </div>
         </div>
 
@@ -92,7 +92,7 @@ export default function DashboardPage() {
             <span>Pengeluaran</span>
           </div>
           <div className="kpi-value text-red-600">
-            {formatIDR(dashboardData.totalExpense)}
+            {formatIDR(data.totalExpense)}
           </div>
         </div>
 
@@ -101,8 +101,8 @@ export default function DashboardPage() {
             <Wallet className="w-3 h-3 text-gray-600" />
             <span>Saldo</span>
           </div>
-          <div className={`kpi-value ${dashboardData.balance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-            {formatIDR(dashboardData.balance)}
+          <div className={`kpi-value ${data.balance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+            {formatIDR(data.balance)}
           </div>
         </div>
       </div>
@@ -128,14 +128,14 @@ export default function DashboardPage() {
       </div>
 
       {/* Budget Summary */}
-      {dashboardData.budgets.length > 0 && (
+      {data.budgets.length > 0 && (
         <Card className="mb-4">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">Ringkasan Budget</CardTitle>
           </CardHeader>
           <CardContent className="p-3 pt-0">
             <div className="space-y-2">
-              {dashboardData.budgets.slice(0, 3).map((budget) => {
+              {data.budgets.slice(0, 3).map((budget) => {
                 const percent = budget.amount > 0 ? (budget.spent / budget.amount) * 100 : 0;
                 return (
                   <div key={budget.id}>
@@ -180,13 +180,13 @@ export default function DashboardPage() {
           </Button>
         </CardHeader>
         <CardContent className="p-0">
-          {dashboardData.recentTransactions.length === 0 ? (
+          {data.recentTransactions.length === 0 ? (
             <div className="p-6 text-center text-sm text-gray-500">
               Belum ada transaksi
             </div>
           ) : (
             <div className="divide-y divide-gray-100">
-              {dashboardData.recentTransactions.map((transaction) => (
+              {data.recentTransactions.map((transaction) => (
                 <div key={transaction.id} className="flex items-center justify-between px-3 py-2.5">
                   <div className="flex items-center space-x-2">
                     <div
