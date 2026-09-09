@@ -1,6 +1,7 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { Home, ArrowLeftRight, PiggyBank, Target, BarChart3 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -13,7 +14,6 @@ const NAV_ITEMS = [
 
 export function BottomNav() {
   const pathname = usePathname();
-  const router = useRouter();
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 safe-area-bottom">
@@ -22,10 +22,11 @@ export function BottomNav() {
           const isActive = pathname === item.href;
           const Icon = item.icon;
           return (
-            <button
+            <Link
               key={item.href}
-              onClick={() => router.push(item.href)}
-              className={`flex flex-col items-center justify-center flex-1 h-full gap-0.5 bg-transparent border-none p-0 ${
+              href={item.href}
+              prefetch={true}
+              className={`flex flex-col items-center justify-center flex-1 h-full gap-0.5 no-underline ${
                 isActive ? "text-emerald-600" : "text-gray-400"
               }`}
             >
@@ -33,7 +34,7 @@ export function BottomNav() {
               <span className={`text-[10px] leading-tight ${isActive ? "font-semibold" : "font-medium"}`}>
                 {item.label}
               </span>
-            </button>
+            </Link>
           );
         })}
       </div>
