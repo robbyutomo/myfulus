@@ -16,8 +16,8 @@ export async function GET(req: Request) {
     const month = parseInt(searchParams.get("month") || (new Date().getMonth() + 1).toString());
     const year = parseInt(searchParams.get("year") || new Date().getFullYear().toString());
 
-    const startOfMonth = new Date(year, month - 1, 1);
-    const endOfMonth = new Date(year, month, 0);
+    const startOfMonth = new Date(year, month - 1, 1, 0, 0, 0, 0);
+    const endOfMonth = new Date(year, month, 0, 23, 59, 59, 999);
 
     // Get all transactions for the month
     const monthTransactions = await db
@@ -28,6 +28,7 @@ export async function GET(req: Request) {
         description: transactions.description,
         date: transactions.date,
         categoryName: categories.name,
+        categoryColor: categories.color,
       })
       .from(transactions)
       .leftJoin(categories, eq(transactions.categoryId, categories.id))
@@ -54,11 +55,12 @@ export async function GET(req: Request) {
       .filter((t) => t.type === "income")
       .reduce((acc, t) => {
         const category = t.categoryName || "Lainnya";
+        const color = t.categoryColor || "#6b7280";
         const existing = acc.find((item) => item.name === category);
         if (existing) {
           existing.value += t.amount;
         } else {
-          acc.push({ name: category, value: t.amount, color: "" });
+          acc.push({ name: category, value: t.amount, color });
         }
         return acc;
       }, [] as Array<{ name: string; value: number; color: string }>);
@@ -68,11 +70,12 @@ export async function GET(req: Request) {
       .filter((t) => t.type === "expense")
       .reduce((acc, t) => {
         const category = t.categoryName || "Lainnya";
+        const color = t.categoryColor || "#6b7280";
         const existing = acc.find((item) => item.name === category);
         if (existing) {
           existing.value += t.amount;
         } else {
-          acc.push({ name: category, value: t.amount, color: "" });
+          acc.push({ name: category, value: t.amount, color });
         }
         return acc;
       }, [] as Array<{ name: string; value: number; color: string }>);

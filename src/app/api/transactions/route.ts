@@ -54,9 +54,47 @@ export async function POST(req: Request) {
     const userId = sessionCookie;
     const { amount, type, description, categoryId, date } = await req.json();
 
+    // Validasi input
     if (!amount || !type || !categoryId || !date) {
       return NextResponse.json(
         { error: "Data tidak lengkap" },
+        { status: 400 }
+      );
+    }
+
+    if (typeof amount !== "number" || amount <= 0 || !isFinite(amount)) {
+      return NextResponse.json(
+        { error: "Jumlah harus angka positif" },
+        { status: 400 }
+      );
+    }
+
+    if (type !== "income" && type !== "expense") {
+      return NextResponse.json(
+        { error: "Jenis harus income atau expense" },
+        { status: 400 }
+      );
+    }
+
+    // Validasi categoryId milik user
+    const category = await db
+      .select()
+      .from(categories)
+      .where(and(eq(categories.id, categoryId), eq(categories.userId, userId)))
+      .limit(1);
+
+    if (category.length === 0) {
+      return NextResponse.json(
+        { error: "Kategori tidak ditemukan" },
+        { status: 400 }
+      );
+    }
+
+    // Validasi tanggal valid
+    const transactionDate = new Date(date);
+    if (isNaN(transactionDate.getTime())) {
+      return NextResponse.json(
+        { error: "Tanggal tidak valid" },
         { status: 400 }
       );
     }
@@ -67,9 +105,9 @@ export async function POST(req: Request) {
       userId,
       categoryId,
       amount,
-      description,
+      description: description || "",
       type,
-      date: new Date(date),
+      date: transactionDate,
       createdAt: new Date(),
     });
 

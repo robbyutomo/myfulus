@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db/client";
 import { budgets, transactions, categories } from "@/lib/db/schema";
-import { eq, and, sum } from "drizzle-orm";
+import { eq, and, sum, gte, lte } from "drizzle-orm";
 import { generateId } from "@/lib/utils";
 
 export async function GET(req: Request) {
@@ -39,8 +39,8 @@ export async function GET(req: Request) {
     // Calculate spent amount for each budget
     const budgetsWithSpent = await Promise.all(
       userBudgets.map(async (budget) => {
-        const startOfMonth = new Date(year, month - 1, 1);
-        const endOfMonth = new Date(year, month, 0);
+        const startOfMonth = new Date(year, month - 1, 1, 0, 0, 0, 0);
+        const endOfMonth = new Date(year, month, 0, 23, 59, 59, 999);
 
         const spentResult = await db
           .select({ total: sum(transactions.amount) })
@@ -50,13 +50,14 @@ export async function GET(req: Request) {
               eq(transactions.userId, userId),
               eq(transactions.categoryId, budget.categoryId),
               eq(transactions.type, "expense"),
-              eq(transactions.date, startOfMonth)
+              gte(transactions.date, startOfMonth),
+              lte(transactions.date, endOfMonth)
             )
           );
 
         return {
           ...budget,
-          spent: spentResult[0]?.total || 0,
+          spent: Number(spentResult[0]?.total || 0),
         };
       })
     );
@@ -82,9 +83,38 @@ export async function POST(req: Request) {
     const userId = sessionCookie;
     const { categoryId, amount, month, year } = await req.json();
 
+    // Validasi input
     if (!categoryId || !amount || !month || !year) {
       return NextResponse.json(
         { error: "Data tidak lengkap" },
+        { status: 400 }
+      );
+    }
+
+    if (typeof amount !== "number" || amount <= 0 || !isFinite(amount)) {
+      return NextResponse.json(
+        { error: "Jumlah harus angka positif" },
+        { status: 400 }
+      );
+    }
+
+    if (month < 1 || month > 12 || year < 2000 || year > 2100) {
+      return NextResponse.json(
+        { error: "Bulan atau tahun tidak valid" },
+        { status: 400 }
+      );
+    }
+
+    // Validasi categoryId milik user
+    const category = await db
+      .select()
+      .from(categories)
+      .where(and(eq(categories.id, categoryId), eq(categories.userId, userId)))
+      .limit(1);
+
+    if (category.length === 0) {
+      return NextResponse.json(
+        { error: "Kategori tidak ditemukan" },
         { status: 400 }
       );
     }
