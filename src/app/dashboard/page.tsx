@@ -103,6 +103,19 @@ export default function DashboardPage() {
                 );
               })}
             </div>
+            
+            {/* Pengeluaran di luar budget */}
+            {data.budgetSummary && data.budgetSummary.expenseOutsideBudget > 0 && (
+              <div className="mt-3 pt-3 border-t border-gray-100">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-500">Di luar budget</span>
+                  <span className="text-xs font-semibold tabular-nums text-amber-600">
+                    {formatIDR(data.budgetSummary.expenseOutsideBudget)}
+                  </span>
+                </div>
+              </div>
+            )}
+            
             <button
               onClick={() => router.push("/budgets")}
               className="w-full text-center text-xs text-emerald-600 mt-3 font-medium bg-transparent border-none p-0"

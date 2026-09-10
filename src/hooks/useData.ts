@@ -27,6 +27,7 @@ export function useDashboard(options?: UseDataOptions) {
     totalExpense: 0,
     balance: 0,
     budgets: [],
+    budgetSummary: null,
     recentTransactions: [],
   };
 }

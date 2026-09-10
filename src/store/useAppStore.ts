@@ -11,6 +11,11 @@ interface DashboardData {
     amount: number;
     spent: number;
   }>;
+  budgetSummary: {
+    totalBudget: number;
+    totalSpent: number;
+    expenseOutsideBudget: number;
+  } | null;
   recentTransactions: Array<{
     id: string;
     amount: number;

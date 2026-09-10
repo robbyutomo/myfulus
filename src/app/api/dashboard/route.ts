@@ -88,11 +88,21 @@ export async function GET(req: Request) {
       })
     );
 
+    // Calculate budget summary
+    const totalBudget = budgetsWithSpent.reduce((sum, b) => sum + b.amount, 0);
+    const totalSpentInBudget = budgetsWithSpent.reduce((sum, b) => sum + b.spent, 0);
+    const expenseOutsideBudget = Math.max(totalExpense - totalSpentInBudget, 0);
+
     return NextResponse.json({
       totalIncome,
       totalExpense,
       balance: totalIncome - totalExpense,
       budgets: budgetsWithSpent,
+      budgetSummary: {
+        totalBudget,
+        totalSpent: totalSpentInBudget,
+        expenseOutsideBudget,
+      },
       recentTransactions: recentTransactions.map((t) => ({
         id: t.id,
         amount: t.amount,
