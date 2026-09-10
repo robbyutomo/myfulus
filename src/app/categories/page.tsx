@@ -8,14 +8,14 @@ import { Input } from "@/components/ui/input";
 import { useCategories } from "@/hooks/useData";
 import { useAppStore } from "@/store/useAppStore";
 import {
-  Plus, Trash2, X, Tag,
+  Plus, Trash2, X, Tag, Pencil,
   Utensils, Coffee, Pizza, Cake, Apple, Beef, Wine, Beer, IceCream, Sandwich,
   Car, Bus, Train, Plane, Bike, Ship, Truck, Fuel, MapPin, Navigation,
   ShoppingBag, ShoppingCart, Store, Package, Gift, CreditCard, Wallet, Coins, Banknote, Receipt,
   Home, Sofa, Lamp, Tv, Monitor, Smartphone, Laptop, Wifi, Phone, Camera,
   Briefcase, Building, Factory, Warehouse, DollarSign, TrendingUp, TrendingDown, BarChart3, PieChart,
   Heart, Activity, Pill, Stethoscope, Thermometer, Syringe, Eye, Ear, Smile, Frown,
-  BookOpen, Book, GraduationCap, PenTool, Pencil, Calculator, FileText, Newspaper, Library, Award,
+  BookOpen, Book, GraduationCap, PenTool, Calculator, FileText, Newspaper, Library, Award,
   Dumbbell, Trophy, Medal, Target, Zap, Timer, Clock, Calendar, Flame, Sun,
   TreePine, Flower2, Leaf, Cloud, Moon, Star, Droplets, Fish, Bird, Bug,
   Gamepad2, Music, Headphones, Mic, Film, Image, Palette, Scissors, Ruler, Compass,
@@ -38,7 +38,7 @@ const ICON_COMPONENTS: Record<string, React.ComponentType<{ className?: string }
   Home, Sofa, Lamp, Tv, Monitor, Smartphone, Laptop, Wifi, Phone, Camera,
   Briefcase, Building, Factory, Warehouse, DollarSign, TrendingUp, TrendingDown, BarChart3, PieChart,
   Heart, Activity, Pill, Stethoscope, Thermometer, Syringe, Eye, Ear, Smile, Frown,
-  BookOpen, Book, GraduationCap, PenTool, Pencil, Calculator, FileText, Newspaper, Library, Award,
+  BookOpen, Book, GraduationCap, PenTool, Calculator, FileText, Newspaper, Library, Award,
   Dumbbell, Trophy, Medal, Target, Zap, Timer, Clock, Calendar, Flame, Sun,
   TreePine, Flower2, Leaf, Cloud, Moon, Star, Droplets, Fish, Bird, Bug,
   Gamepad2, Music, Headphones, Mic, Film, Image, Palette, Scissors, Ruler, Compass,
@@ -59,7 +59,7 @@ const ICON_CATEGORIES = [
   { name: "Rumah", icons: ["Home", "Sofa", "Lamp", "Tv", "Monitor", "Smartphone", "Laptop", "Wifi", "Phone", "Camera"] },
   { name: "Kerja", icons: ["Briefcase", "Building", "Factory", "Warehouse", "DollarSign", "TrendingUp", "TrendingDown", "BarChart3", "PieChart"] },
   { name: "Kesehatan", icons: ["Heart", "Activity", "Pill", "Stethoscope", "Thermometer", "Syringe", "Eye", "Ear", "Smile", "Frown"] },
-  { name: "Pendidikan", icons: ["BookOpen", "Book", "GraduationCap", "PenTool", "Pencil", "Calculator", "FileText", "Newspaper", "Library", "Award"] },
+  { name: "Pendidikan", icons: ["BookOpen", "Book", "GraduationCap", "PenTool", "Calculator", "FileText", "Newspaper", "Library", "Award"] },
   { name: "Olahraga", icons: ["Dumbbell", "Trophy", "Medal", "Target", "Zap", "Timer", "Clock", "Calendar", "Flame", "Sun"] },
   { name: "Alam", icons: ["TreePine", "Flower2", "Leaf", "Cloud", "Moon", "Star", "Droplets", "Fish", "Bird", "Bug"] },
   { name: "Hiburan", icons: ["Gamepad2", "Music", "Headphones", "Mic", "Film", "Image", "Palette", "Scissors", "Ruler", "Compass"] },
@@ -70,8 +70,9 @@ const ICON_CATEGORIES = [
 export default function CategoriesPage() {
   const categories = useCategories();
   const { setCategories } = useAppStore();
-  
+
   const [showForm, setShowForm] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<CategoryWithColor | null>(null);
   const [selectedIconCategory, setSelectedIconCategory] = useState("Makanan");
   const [formData, setFormData] = useState({
     name: "",
@@ -83,40 +84,82 @@ export default function CategoriesPage() {
   const expenseCategories = (categories?.filter(c => c.type === "expense") || []) as CategoryWithColor[];
   const incomeCategories = (categories?.filter(c => c.type === "income") || []) as CategoryWithColor[];
 
+  const openAddForm = () => {
+    setEditingCategory(null);
+    setFormData({ name: "", type: "expense", color: "#6b7280", icon: "Tag" });
+    setShowForm(true);
+  };
+
+  const openEditForm = (category: CategoryWithColor) => {
+    setEditingCategory(category);
+    setFormData({
+      name: category.name,
+      type: category.type,
+      color: category.color || "#6b7280",
+      icon: category.icon || "Tag",
+    });
+    setShowForm(true);
+  };
+
+  const closeForm = () => {
+    setShowForm(false);
+    setEditingCategory(null);
+  };
+
+  const refreshCategories = async () => {
+    const data = await fetch("/api/categories").then(r => r.json());
+    setCategories(data.categories || []);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch("/api/categories", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+      if (editingCategory) {
+        // Edit mode
+        const res = await fetch("/api/categories", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: editingCategory.id, ...formData }),
+        });
 
-      if (res.ok) {
-        setShowForm(false);
-        setFormData({ name: "", type: "expense", color: "#6b7280", icon: "Tag" });
-        const data = await fetch("/api/categories").then(r => r.json());
-        setCategories(data.categories || []);
+        if (res.ok) {
+          closeForm();
+          await refreshCategories();
+        } else {
+          const err = await res.json();
+          alert(err.error || "Gagal mengubah kategori");
+        }
       } else {
-        const err = await res.json();
-        alert(err.error || "Gagal menambah kategori");
+        // Add mode
+        const res = await fetch("/api/categories", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        });
+
+        if (res.ok) {
+          closeForm();
+          await refreshCategories();
+        } else {
+          const err = await res.json();
+          alert(err.error || "Gagal menambah kategori");
+        }
       }
     } catch (error) {
-      console.error("Failed to add category:", error);
+      console.error("Failed to save category:", error);
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Hapus kategori ini?")) return;
-    
+
     try {
       const res = await fetch(`/api/categories?id=${id}`, {
         method: "DELETE",
       });
 
       if (res.ok) {
-        const data = await fetch("/api/categories").then(r => r.json());
-        setCategories(data.categories || []);
+        await refreshCategories();
       }
     } catch (error) {
       console.error("Failed to delete category:", error);
@@ -131,7 +174,7 @@ export default function CategoriesPage() {
         <div className="text-sm text-gray-500">
           {categories?.length || 0} kategori
         </div>
-        <Button onClick={() => setShowForm(true)} size="sm">
+        <Button onClick={openAddForm} size="sm">
           <Plus className="w-4 h-4" />
           Tambah
         </Button>
@@ -140,9 +183,11 @@ export default function CategoriesPage() {
       {showForm && (
         <Card className="mb-4">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm">Kategori Baru</CardTitle>
+            <CardTitle className="text-sm">
+              {editingCategory ? "Edit Kategori" : "Kategori Baru"}
+            </CardTitle>
             <button
-              onClick={() => setShowForm(false)}
+              onClick={closeForm}
               className="text-gray-400 hover:text-gray-600 bg-transparent border-none p-1"
             >
               <X className="w-4 h-4" />
@@ -243,9 +288,9 @@ export default function CategoriesPage() {
 
             <div className="flex space-x-2">
               <Button type="button" onClick={handleSubmit} className="flex-1">
-                Simpan
+                {editingCategory ? "Simpan Perubahan" : "Simpan"}
               </Button>
-              <Button variant="secondary" onClick={() => setShowForm(false)}>
+              <Button variant="secondary" onClick={closeForm}>
                 Batal
               </Button>
             </div>
@@ -281,12 +326,20 @@ export default function CategoriesPage() {
                         {category.name}
                       </span>
                     </div>
-                    <button
-                      onClick={() => handleDelete(category.id)}
-                      className="text-gray-300 hover:text-red-500 bg-transparent border-none p-1"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center space-x-1">
+                      <button
+                        onClick={() => openEditForm(category)}
+                        className="text-gray-300 hover:text-blue-500 bg-transparent border-none p-1"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(category.id)}
+                        className="text-gray-300 hover:text-red-500 bg-transparent border-none p-1"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </CardContent>
                 </Card>
               );
@@ -323,12 +376,20 @@ export default function CategoriesPage() {
                         {category.name}
                       </span>
                     </div>
-                    <button
-                      onClick={() => handleDelete(category.id)}
-                      className="text-gray-300 hover:text-red-500 bg-transparent border-none p-1"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center space-x-1">
+                      <button
+                        onClick={() => openEditForm(category)}
+                        className="text-gray-300 hover:text-blue-500 bg-transparent border-none p-1"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(category.id)}
+                        className="text-gray-300 hover:text-red-500 bg-transparent border-none p-1"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </CardContent>
                 </Card>
               );

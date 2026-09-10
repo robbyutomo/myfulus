@@ -88,6 +88,78 @@ export async function POST(req: Request) {
   }
 }
 
+export async function PUT(req: Request) {
+  try {
+    const sessionCookie = req.headers.get("cookie")?.match(/session=([^;]+)/)?.[1];
+
+    if (!sessionCookie) {
+      return NextResponse.json({ error: "Tidak ada sesi" }, { status: 401 });
+    }
+
+    const userId = sessionCookie;
+    const { id, name, type, icon, color } = await req.json();
+
+    if (!id || !name || !type) {
+      return NextResponse.json(
+        { error: "ID, nama, dan jenis harus diisi" },
+        { status: 400 }
+      );
+    }
+
+    // Verify ownership
+    const existing = await db
+      .select()
+      .from(categories)
+      .where(
+        and(
+          eq(categories.id, id),
+          eq(categories.userId, userId)
+        )
+      )
+      .limit(1);
+
+    if (existing.length === 0) {
+      return NextResponse.json(
+        { error: "Kategori tidak ditemukan" },
+        { status: 404 }
+      );
+    }
+
+    // Check duplicate name for same user and type (excluding current)
+    const duplicate = await db
+      .select()
+      .from(categories)
+      .where(
+        and(
+          eq(categories.userId, userId),
+          eq(categories.name, name),
+          eq(categories.type, type)
+        )
+      )
+      .limit(1);
+
+    if (duplicate.length > 0 && duplicate[0].id !== id) {
+      return NextResponse.json(
+        { error: "Kategori dengan nama ini sudah ada" },
+        { status: 400 }
+      );
+    }
+
+    await db
+      .update(categories)
+      .set({ name, type, icon: icon || "tag", color: color || "#6b7280" })
+      .where(eq(categories.id, id));
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("Categories PUT error:", error);
+    return NextResponse.json(
+      { error: "Terjadi kesalahan server" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function DELETE(req: Request) {
   try {
     const sessionCookie = req.headers.get("cookie")?.match(/session=([^;]+)/)?.[1];

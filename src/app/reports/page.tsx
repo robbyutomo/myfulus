@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { formatIDR, formatIDRSingkat } from "@/lib/utils";
 import useSWR from "swr";
 import { Download } from "lucide-react";
+import { ClickableAmount } from "@/components/ClickableAmount";
 import {
   BarChart,
   Bar,
@@ -109,13 +110,19 @@ export default function ReportsPage() {
         <div className="kpi-card overflow-hidden">
           <div className="kpi-label">masuk</div>
           <div className="kpi-value text-emerald-600 truncate">
-            {formatIDRSingkat(data.monthlyIncome)}
+            <ClickableAmount
+              value={data.monthlyIncome}
+              abbreviated={formatIDRSingkat(data.monthlyIncome)}
+            />
           </div>
         </div>
         <div className="kpi-card overflow-hidden">
           <div className="kpi-label">keluar</div>
           <div className="kpi-value text-red-600 truncate">
-            {formatIDRSingkat(data.monthlyExpense)}
+            <ClickableAmount
+              value={data.monthlyExpense}
+              abbreviated={formatIDRSingkat(data.monthlyExpense)}
+            />
           </div>
         </div>
         <div className="kpi-card overflow-hidden">
@@ -127,7 +134,10 @@ export default function ReportsPage() {
                 : "text-red-600"
             }`}
           >
-            {formatIDRSingkat(data.monthlyIncome - data.monthlyExpense)}
+            <ClickableAmount
+              value={data.monthlyIncome - data.monthlyExpense}
+              abbreviated={formatIDRSingkat(data.monthlyIncome - data.monthlyExpense)}
+            />
           </div>
         </div>
       </div>

@@ -73,7 +73,8 @@ export default function BudgetsPage() {
     setShowForm(true);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, categoryName: string) => {
+    if (!confirm(`Hapus budget "${categoryName}"?`)) return;
     try {
       const res = await fetch(`/api/budgets?id=${id}`, {
         method: "DELETE",
@@ -236,7 +237,7 @@ export default function BudgetsPage() {
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button
-                        onClick={() => handleDelete(budget.id)}
+                        onClick={() => handleDelete(budget.id, budget.categoryName)}
                         className="text-gray-400 hover:text-red-500 bg-transparent border-none p-1"
                       >
                         <Trash2 className="w-3.5 h-3.5" />

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatIDR, formatIDRSingkat } from "@/lib/utils";
 import { useDashboard } from "@/hooks/useData";
+import { ClickableAmount } from "@/components/ClickableAmount";
 import {
   TrendingUp,
   TrendingDown,
@@ -28,7 +29,10 @@ export default function DashboardPage() {
             <span>masuk</span>
           </div>
           <div className="kpi-value text-emerald-600 truncate">
-            {formatIDRSingkat(data.totalIncome)}
+            <ClickableAmount
+              value={data.totalIncome}
+              abbreviated={formatIDRSingkat(data.totalIncome)}
+            />
           </div>
         </div>
 
@@ -38,7 +42,10 @@ export default function DashboardPage() {
             <span>keluar</span>
           </div>
           <div className="kpi-value text-red-600 truncate">
-            {formatIDRSingkat(data.totalExpense)}
+            <ClickableAmount
+              value={data.totalExpense}
+              abbreviated={formatIDRSingkat(data.totalExpense)}
+            />
           </div>
         </div>
 
@@ -48,7 +55,10 @@ export default function DashboardPage() {
             <span>Saldo</span>
           </div>
           <div className={`kpi-value truncate ${data.balance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-            {formatIDRSingkat(data.balance)}
+            <ClickableAmount
+              value={data.balance}
+              abbreviated={formatIDRSingkat(data.balance)}
+            />
           </div>
         </div>
       </div>
