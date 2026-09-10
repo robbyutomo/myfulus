@@ -151,53 +151,53 @@ export default function TransactionsPage() {
                 </div>
               </div>
               
-              {/* Row 2: Kategori (full width) */}
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600">
-                  Kategori
-                </label>
-                <select
-                  className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm"
-                  value={formData.categoryId}
-                  onChange={(e) =>
-                    setFormData({ ...formData, categoryId: e.target.value })
-                  }
-                  required
-                >
-                  <option value="">Pilih kategori</option>
-                  {categories
-                    .filter((c) => c.type === formData.type)
-                    .map((category) => {
-                      const hasBudget = budgetCategoryIds.includes(category.id);
-                      return (
-                        <option key={category.id} value={category.id}>
-                          {category.name} {hasBudget ? "💰" : ""}
-                        </option>
-                      );
-                    })}
-                </select>
+              {/* Row 2: Kategori | Jumlah */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-gray-600">
+                    Kategori
+                  </label>
+                  <select
+                    className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm"
+                    value={formData.categoryId}
+                    onChange={(e) =>
+                      setFormData({ ...formData, categoryId: e.target.value })
+                    }
+                    required
+                  >
+                    <option value="">Pilih</option>
+                    {categories
+                      .filter((c) => c.type === formData.type)
+                      .map((category) => {
+                        const hasBudget = budgetCategoryIds.includes(category.id);
+                        return (
+                          <option key={category.id} value={category.id}>
+                            {category.name} {hasBudget ? "💰" : ""}
+                          </option>
+                        );
+                      })}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-gray-600">
+                    Jumlah
+                  </label>
+                  <Input
+                    type="number"
+                    placeholder="0"
+                    value={formData.amount}
+                    onChange={(e) =>
+                      setFormData({ ...formData, amount: e.target.value })
+                    }
+                    required
+                  />
+                </div>
               </div>
 
-              {/* Row 3: Jumlah */}
+              {/* Row 3: Deskripsi */}
               <div className="space-y-1">
                 <label className="text-xs font-medium text-gray-600">
-                  Jumlah
-                </label>
-                <Input
-                  type="number"
-                  placeholder="0"
-                  value={formData.amount}
-                  onChange={(e) =>
-                    setFormData({ ...formData, amount: e.target.value })
-                  }
-                  required
-                />
-              </div>
-
-              {/* Row 4: Keterangan */}
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600">
-                  Keterangan
+                  Deskripsi
                 </label>
                 <Input
                   type="text"
