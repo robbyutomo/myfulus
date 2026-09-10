@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MobileLayout } from "@/components/MobileLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,12 +8,20 @@ import { Input } from "@/components/ui/input";
 import { formatIDR } from "@/lib/utils";
 import { useTransactions, useCategories } from "@/hooks/useData";
 import { useAppStore } from "@/store/useAppStore";
-import { Plus, Trash2, X } from "lucide-react";
+import { Plus, Trash2, X, PiggyBank } from "lucide-react";
+
+interface Budget {
+  id: string;
+  categoryId: string;
+  amount: number;
+  spent: number;
+}
 
 export default function TransactionsPage() {
   const transactions = useTransactions();
   const categories = useCategories();
   const { setTransactions } = useAppStore();
+  const [budgets, setBudgets] = useState<Budget[]>([]);
   
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -23,6 +31,19 @@ export default function TransactionsPage() {
     categoryId: "",
     date: new Date().toISOString().split("T")[0],
   });
+
+  // Fetch budget bulan ini
+  useEffect(() => {
+    const now = new Date();
+    const month = now.getMonth() + 1;
+    const year = now.getFullYear();
+    fetch(`/api/budgets?month=${month}&year=${year}`)
+      .then(r => r.json())
+      .then(data => setBudgets(data.budgets || []))
+      .catch(() => {});
+  }, []);
+
+  const budgetCategoryIds = budgets.map(b => b.categoryId);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,21 +116,8 @@ export default function TransactionsPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-3">
+              {/* Row 1: Jenis | Tanggal */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-gray-600">
-                    Jumlah
-                  </label>
-                  <Input
-                    type="number"
-                    placeholder="0"
-                    value={formData.amount}
-                    onChange={(e) =>
-                      setFormData({ ...formData, amount: e.target.value })
-                    }
-                    required
-                  />
-                </div>
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-gray-600">
                     Jenis
@@ -130,28 +138,6 @@ export default function TransactionsPage() {
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-gray-600">
-                    Kategori
-                  </label>
-                  <select
-                    className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm"
-                    value={formData.categoryId}
-                    onChange={(e) =>
-                      setFormData({ ...formData, categoryId: e.target.value })
-                    }
-                    required
-                  >
-                    <option value="">Pilih</option>
-                    {categories
-                      .filter((c) => c.type === formData.type)
-                      .map((category) => (
-                        <option key={category.id} value={category.id}>
-                          {category.name}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-gray-600">
                     Tanggal
                   </label>
                   <Input
@@ -164,19 +150,104 @@ export default function TransactionsPage() {
                   />
                 </div>
               </div>
+              
+              {/* Row 2: Kategori (full width) */}
               <div className="space-y-1">
                 <label className="text-xs font-medium text-gray-600">
-                  Deskripsi
+                  Kategori
+                </label>
+                <select
+                  className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm"
+                  value={formData.categoryId}
+                  onChange={(e) =>
+                    setFormData({ ...formData, categoryId: e.target.value })
+                  }
+                  required
+                >
+                  <option value="">Pilih kategori</option>
+                  {categories
+                    .filter((c) => c.type === formData.type)
+                    .map((category) => {
+                      const hasBudget = budgetCategoryIds.includes(category.id);
+                      return (
+                        <option key={category.id} value={category.id}>
+                          {category.name} {hasBudget ? "💰" : ""}
+                        </option>
+                      );
+                    })}
+                </select>
+              </div>
+
+              {/* Row 3: Jumlah */}
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-600">
+                  Jumlah
+                </label>
+                <Input
+                  type="number"
+                  placeholder="0"
+                  value={formData.amount}
+                  onChange={(e) =>
+                    setFormData({ ...formData, amount: e.target.value })
+                  }
+                  required
+                />
+              </div>
+
+              {/* Row 4: Keterangan */}
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-600">
+                  Keterangan
                 </label>
                 <Input
                   type="text"
-                  placeholder="Catatan"
+                  placeholder="Catatan (opsional)"
                   value={formData.description}
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
                   }
                 />
               </div>
+              
+              {/* Info budget jika kategori dipilih punya budget */}
+              {formData.categoryId && budgetCategoryIds.includes(formData.categoryId) && (() => {
+                const budget = budgets.find(b => b.categoryId === formData.categoryId);
+                if (!budget) return null;
+                const remaining = budget.amount - budget.spent;
+                const inputAmount = parseFloat(formData.amount) || 0;
+                const isOverBudget = inputAmount > remaining && inputAmount > 0;
+                
+                return (
+                  <div className={`rounded-md p-2 space-y-1 ${
+                    isOverBudget 
+                      ? "bg-red-50 border border-red-200" 
+                      : "bg-emerald-50 border border-emerald-200"
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <PiggyBank className={`w-4 h-4 ${isOverBudget ? "text-red-600" : "text-emerald-600"}`} />
+                        <span className={`text-xs font-medium ${isOverBudget ? "text-red-700" : "text-emerald-700"}`}>
+                          Sisa Budget
+                        </span>
+                      </div>
+                      <span className={`text-xs font-semibold tabular-nums ${isOverBudget ? "text-red-700" : "text-emerald-700"}`}>
+                        {formatIDR(remaining)}
+                      </span>
+                    </div>
+                    {isOverBudget && (
+                      <div className="text-xs text-red-600 font-medium">
+                        ⚠️ Melebihi sisa budget {formatIDR(inputAmount - remaining)}
+                      </div>
+                    )}
+                    {!isOverBudget && inputAmount > 0 && (
+                      <div className="text-xs text-emerald-600">
+                        Sisa setelah transaksi: {formatIDR(remaining - inputAmount)}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+              
               <div className="flex space-x-2">
                 <Button type="submit" className="flex-1">
                   Simpan
