@@ -9,7 +9,6 @@ import { useDashboard } from "@/hooks/useData";
 import {
   TrendingUp,
   TrendingDown,
-  Wallet,
   Plus,
   ArrowRight,
 } from "lucide-react";
@@ -21,7 +20,7 @@ export default function DashboardPage() {
   return (
     <MobileLayout title="Beranda">
       {/* KPI Strip */}
-      <div className="grid grid-cols-3 gap-2 mb-4">
+      <div className="grid grid-cols-2 gap-2 mb-4">
         <div className="kpi-card">
           <div className="kpi-label flex items-center space-x-1">
             <TrendingUp className="w-3 h-3 text-emerald-600" />
@@ -39,16 +38,6 @@ export default function DashboardPage() {
           </div>
           <div className="kpi-value text-red-600">
             {formatIDR(data.totalExpense)}
-          </div>
-        </div>
-
-        <div className="kpi-card">
-          <div className="kpi-label flex items-center space-x-1">
-            <Wallet className="w-3 h-3 text-gray-600" />
-            <span>Saldo</span>
-          </div>
-          <div className={`kpi-value ${data.balance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-            {formatIDR(data.balance)}
           </div>
         </div>
       </div>
