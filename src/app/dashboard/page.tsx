@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { MobileLayout } from "@/components/MobileLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { formatIDR } from "@/lib/utils";
+import { formatIDR, formatIDRSingkat } from "@/lib/utils";
 import { useDashboard } from "@/hooks/useData";
 import {
   TrendingUp,
@@ -22,33 +22,33 @@ export default function DashboardPage() {
     <MobileLayout title="Beranda">
       {/* KPI Strip */}
       <div className="grid grid-cols-3 gap-2 mb-4">
-        <div className="kpi-card">
+        <div className="kpi-card overflow-hidden">
           <div className="kpi-label flex items-center space-x-1">
             <TrendingUp className="w-3 h-3 text-emerald-600" />
-            <span>Pemasukan</span>
+            <span>masuk</span>
           </div>
-          <div className="kpi-value text-emerald-600">
-            {formatIDR(data.totalIncome)}
+          <div className="kpi-value text-emerald-600 truncate">
+            {formatIDRSingkat(data.totalIncome)}
           </div>
         </div>
 
-        <div className="kpi-card">
+        <div className="kpi-card overflow-hidden">
           <div className="kpi-label flex items-center space-x-1">
             <TrendingDown className="w-3 h-3 text-red-600" />
-            <span>Pengeluaran</span>
+            <span>keluar</span>
           </div>
-          <div className="kpi-value text-red-600">
-            {formatIDR(data.totalExpense)}
+          <div className="kpi-value text-red-600 truncate">
+            {formatIDRSingkat(data.totalExpense)}
           </div>
         </div>
 
-        <div className="kpi-card">
+        <div className="kpi-card overflow-hidden">
           <div className="kpi-label flex items-center space-x-1">
             <Wallet className="w-3 h-3 text-gray-600" />
             <span>Saldo</span>
           </div>
-          <div className={`kpi-value ${data.balance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-            {formatIDR(data.balance)}
+          <div className={`kpi-value truncate ${data.balance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+            {formatIDRSingkat(data.balance)}
           </div>
         </div>
       </div>

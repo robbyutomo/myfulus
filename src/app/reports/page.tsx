@@ -4,7 +4,7 @@ import { useState } from "react";
 import { MobileLayout } from "@/components/MobileLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { formatIDR } from "@/lib/utils";
+import { formatIDR, formatIDRSingkat } from "@/lib/utils";
 import useSWR from "swr";
 import { Download } from "lucide-react";
 import {
@@ -106,28 +106,28 @@ export default function ReportsPage() {
 
       {/* KPI Strip */}
       <div className="grid grid-cols-3 gap-2 mb-4">
-        <div className="kpi-card">
-          <div className="kpi-label">Pemasukan</div>
-          <div className="kpi-value text-emerald-600">
-            {formatIDR(data.monthlyIncome)}
+        <div className="kpi-card overflow-hidden">
+          <div className="kpi-label">masuk</div>
+          <div className="kpi-value text-emerald-600 truncate">
+            {formatIDRSingkat(data.monthlyIncome)}
           </div>
         </div>
-        <div className="kpi-card">
-          <div className="kpi-label">Pengeluaran</div>
-          <div className="kpi-value text-red-600">
-            {formatIDR(data.monthlyExpense)}
+        <div className="kpi-card overflow-hidden">
+          <div className="kpi-label">keluar</div>
+          <div className="kpi-value text-red-600 truncate">
+            {formatIDRSingkat(data.monthlyExpense)}
           </div>
         </div>
-        <div className="kpi-card">
+        <div className="kpi-card overflow-hidden">
           <div className="kpi-label">Selisih</div>
           <div
-            className={`kpi-value ${
+            className={`kpi-value truncate ${
               data.monthlyIncome - data.monthlyExpense >= 0
                 ? "text-emerald-600"
                 : "text-red-600"
             }`}
           >
-            {formatIDR(data.monthlyIncome - data.monthlyExpense)}
+            {formatIDRSingkat(data.monthlyIncome - data.monthlyExpense)}
           </div>
         </div>
       </div>
