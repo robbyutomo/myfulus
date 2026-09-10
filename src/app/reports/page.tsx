@@ -5,7 +5,7 @@ import { MobileLayout } from "@/components/MobileLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatIDR } from "@/lib/utils";
-import { useCachedFetch } from "@/hooks/useCachedFetch";
+import useSWR from "swr";
 import { Download } from "lucide-react";
 import {
   BarChart,
@@ -35,8 +35,10 @@ export default function ReportsPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   
-  const { data: reportData, loading } = useCachedFetch<ReportData>(
-    `/api/reports?month=${currentMonth}&year=${currentYear}`
+  const { data: reportData } = useSWR<ReportData>(
+    `/api/reports?month=${currentMonth}&year=${currentYear}`,
+    (url) => fetch(url).then(r => r.json()),
+    { revalidateOnFocus: false }
   );
 
   const exportCSV = () => {
@@ -57,29 +59,6 @@ export default function ReportsPage() {
     a.click();
     URL.revokeObjectURL(url);
   };
-
-  if (loading) {
-    return (
-      <MobileLayout title="Laporan">
-        <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-2">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="kpi-card animate-pulse">
-                <div className="h-2 bg-gray-200 rounded w-16 mb-2"></div>
-                <div className="h-5 bg-gray-200 rounded w-20"></div>
-              </div>
-            ))}
-          </div>
-          {[1, 2].map((i) => (
-            <div key={i} className="bg-white rounded-md border border-gray-200 p-4 animate-pulse">
-              <div className="h-4 bg-gray-200 rounded w-32 mb-3"></div>
-              <div className="h-32 bg-gray-200 rounded"></div>
-            </div>
-          ))}
-        </div>
-      </MobileLayout>
-    );
-  }
 
   const data = reportData || {
     monthlyIncome: 0,

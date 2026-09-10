@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BottomNav } from "./BottomNav";
 import { Wallet, LogOut } from "lucide-react";
@@ -12,38 +11,11 @@ interface MobileLayoutProps {
 
 export function MobileLayout({ children, title }: MobileLayoutProps) {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    try {
-      const res = await fetch("/api/auth/me");
-      if (!res.ok) {
-        router.push("/");
-        return;
-      }
-    } catch (error) {
-      router.push("/");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/");
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-sm text-gray-500">Memuat...</div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-16">
