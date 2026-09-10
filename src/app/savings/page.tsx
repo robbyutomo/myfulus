@@ -112,22 +112,6 @@ export default function SavingsPage() {
     return diffDays;
   };
 
-  if (!savings) {
-    return (
-      <MobileLayout title="Tabungan">
-        <div className="space-y-3">
-          {[1, 2].map((i) => (
-            <div key={i} className="bg-white rounded-md border border-gray-200 p-3 animate-pulse">
-              <div className="h-4 bg-gray-200 rounded w-32 mb-3"></div>
-              <div className="h-2 bg-gray-200 rounded mb-2"></div>
-              <div className="h-2 bg-gray-200 rounded w-2/3"></div>
-            </div>
-          ))}
-        </div>
-      </MobileLayout>
-    );
-  }
-
   return (
     <MobileLayout title="Tabungan">
       {/* Actions */}

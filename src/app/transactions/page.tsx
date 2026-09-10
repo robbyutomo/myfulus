@@ -45,7 +45,6 @@ export default function TransactionsPage() {
           categoryId: "",
           date: new Date().toISOString().split("T")[0],
         });
-        // Refresh data
         const data = await fetch("/api/transactions").then(r => r.json());
         setTransactions(data.transactions || []);
       }
@@ -68,27 +67,6 @@ export default function TransactionsPage() {
       console.error("Failed to delete transaction:", error);
     }
   };
-
-  if (!transactions || !categories) {
-    return (
-      <MobileLayout title="Transaksi">
-        <div className="space-y-3">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-white rounded-md border border-gray-200 p-3 animate-pulse">
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-gray-200 rounded-full"></div>
-                <div className="flex-1">
-                  <div className="h-3 bg-gray-200 rounded w-24 mb-1"></div>
-                  <div className="h-2 bg-gray-200 rounded w-16"></div>
-                </div>
-                <div className="h-4 bg-gray-200 rounded w-20"></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </MobileLayout>
-    );
-  }
 
   return (
     <MobileLayout title="Transaksi">

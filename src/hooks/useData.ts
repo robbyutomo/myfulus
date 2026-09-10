@@ -5,10 +5,9 @@ import { useAppStore, CACHE_DURATION } from "@/store/useAppStore";
 
 interface UseDataOptions {
   enabled?: boolean;
-  refetchInterval?: number;
 }
 
-// Dashboard
+// Dashboard - return default jika null
 export function useDashboard(options?: UseDataOptions) {
   const { dashboard, lastFetch, setDashboard } = useAppStore();
   const { enabled = true } = options || {};
@@ -23,7 +22,13 @@ export function useDashboard(options?: UseDataOptions) {
       .catch(console.error);
   }, [enabled, dashboard, lastFetch.dashboard, setDashboard]);
 
-  return dashboard;
+  return dashboard || {
+    totalIncome: 0,
+    totalExpense: 0,
+    balance: 0,
+    budgets: [],
+    recentTransactions: [],
+  };
 }
 
 // Transactions
