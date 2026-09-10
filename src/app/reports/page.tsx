@@ -4,10 +4,9 @@ import { useState } from "react";
 import { MobileLayout } from "@/components/MobileLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { formatIDR, formatIDRSingkat } from "@/lib/utils";
+import { formatIDR } from "@/lib/utils";
 import useSWR from "swr";
 import { Download } from "lucide-react";
-import { ClickableAmount } from "@/components/ClickableAmount";
 import {
   BarChart,
   Bar,
@@ -106,38 +105,17 @@ export default function ReportsPage() {
       </div>
 
       {/* KPI Strip */}
-      <div className="grid grid-cols-3 gap-2 mb-4">
-        <div className="kpi-card overflow-hidden">
+      <div className="grid grid-cols-2 gap-2 mb-4">
+        <div className="kpi-card">
           <div className="kpi-label">masuk</div>
-          <div className="kpi-value text-emerald-600 truncate">
-            <ClickableAmount
-              value={data.monthlyIncome}
-              abbreviated={formatIDRSingkat(data.monthlyIncome)}
-            />
+          <div className="kpi-value text-emerald-600">
+            {formatIDR(data.monthlyIncome)}
           </div>
         </div>
-        <div className="kpi-card overflow-hidden">
+        <div className="kpi-card">
           <div className="kpi-label">keluar</div>
-          <div className="kpi-value text-red-600 truncate">
-            <ClickableAmount
-              value={data.monthlyExpense}
-              abbreviated={formatIDRSingkat(data.monthlyExpense)}
-            />
-          </div>
-        </div>
-        <div className="kpi-card overflow-hidden">
-          <div className="kpi-label">Selisih</div>
-          <div
-            className={`kpi-value truncate ${
-              data.monthlyIncome - data.monthlyExpense >= 0
-                ? "text-emerald-600"
-                : "text-red-600"
-            }`}
-          >
-            <ClickableAmount
-              value={data.monthlyIncome - data.monthlyExpense}
-              abbreviated={formatIDRSingkat(data.monthlyIncome - data.monthlyExpense)}
-            />
+          <div className="kpi-value text-red-600">
+            {formatIDR(data.monthlyExpense)}
           </div>
         </div>
       </div>

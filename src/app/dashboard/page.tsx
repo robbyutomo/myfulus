@@ -9,8 +9,6 @@ import { useDashboard } from "@/hooks/useData";
 import {
   TrendingUp,
   TrendingDown,
-  Plus,
-  ArrowRight,
 } from "lucide-react";
 
 export default function DashboardPage() {
@@ -40,26 +38,6 @@ export default function DashboardPage() {
             {formatIDR(data.totalExpense)}
           </div>
         </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-2 gap-2 mb-4">
-        <Button
-          variant="primary"
-          className="h-12"
-          onClick={() => router.push("/transactions")}
-        >
-          <Plus className="w-4 h-4" />
-          Transaksi
-        </Button>
-        <Button
-          variant="secondary"
-          className="h-12"
-          onClick={() => router.push("/reports")}
-        >
-          Laporan
-          <ArrowRight className="w-4 h-4" />
-        </Button>
       </div>
 
       {/* Budget Summary */}
