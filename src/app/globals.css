@@ -183,14 +183,12 @@ tr:hover td {
 }
 
 .kpi-value {
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 1.2;
   margin-top: var(--space-1);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  word-break: break-all;
 }
 
 .kpi-label {
@@ -276,7 +274,7 @@ tr:hover td {
   }
   
   .kpi-value {
-    font-size: 1rem;
+    font-size: 0.875rem;
   }
   
   .kpi-label {
